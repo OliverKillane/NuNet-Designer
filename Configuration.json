@@ -1,0 +1,63 @@
+{
+  "Neuron": {
+    "colour": [
+      0,
+      0,
+      255
+    ],
+    "shape": "circle"
+  },
+  "Output": {
+    "colour": [
+      255,
+      0,
+      0
+    ],
+    "shape": "pentagon"
+  },
+  "Input": {
+    "colour": [
+      0,
+      255,
+      0
+    ],
+    "shape": "square"
+  },
+  "Synapse": {
+    "colour": [
+      0,
+      0,
+      255
+    ],
+    "width": 2
+  },
+  "Background": {
+    "fillcolour": [
+      255,
+      255,
+      255
+    ],
+    "coorcolour": [
+      0,
+      0,
+      0
+    ]
+  },
+  "ErrorText": {
+    "colour": [
+      255,
+      0,
+      0
+    ],
+    "size": 10,
+    "spacing": 10
+  },
+  "FileNameText": {
+    "size": 20,
+    "colour": [
+      40,
+      40,
+      40
+    ]
+  }
+}
