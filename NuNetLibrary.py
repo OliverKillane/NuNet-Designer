@@ -1,336 +1,114 @@
-import math
+from math import log1p, cosh, tanh, e
 from random import randint
+from collections import namedtuple
 
 
-# All activation and loss functions required for the neurons, are held within a class as static methods.
-# Activation Functions return a tuple of: value, derivative.
+# Creating a named tuple type for the activation and loss functions
+FuncReturn = namedtuple("Activation", "result derivative")
+
 class ActivationFunctions:
+    """All activation and loss functions required for the neurons, are held within a class as static methods.
+    Activation Functions return a named tuple of: value, derivative."""
 
-    # binstep (binary step) is used for binary classifiers.
     @staticmethod
-    def binstep(value, constant=0):
+    def binstep(value: float, constant: float = 0) -> FuncReturn:
+        """Binstep (binary step) is used for binary classifiers."""
         if value > 0:
-            return 1, 0
+            return FuncReturn(result=1, derivative=0)
         else:
-            return 0, 0
+            return FuncReturn(result=0, derivative=0)
 
-    # linear returns a linear multiple of the input provided.
     @staticmethod
-    def linear(value, constant=0):
-        return constant * value, constant
+    def linear(value: float, constant=0) -> FuncReturn:
+        """Linear returns a linear multiple of the input provided."""
+        return FuncReturn(result=constant * value, derivative=constant)
 
-    # expolinearunit (exponential linear unit) activation function.
     @staticmethod
-    def expolinearunit(value, constant=0):
+    def expolinearunit(value: float, constant: float = 0) -> FuncReturn:
+        """Expolinearunit (exponential linear unit) activation function."""
         if value > 0:
-            return value, 1
+            return FuncReturn(result=value, derivative=1)
         else:
-            return constant * (math.e ** value - 1), constant * math.e ** value
+            return FuncReturn(result=constant * (e ** value - 1), derivative=constant * e ** value)
 
-    # softplus activation function.
     @staticmethod
-    def softplus(value, constant=0):
-        return math.log1p(1 + math.e ** value), (1 + math.e ** -value) ** -1
+    def softplus(value: float, constant: float = 0) -> FuncReturn:
+        """Softplus activation function."""
+        return FuncReturn(result=log1p(1 + e ** value), derivative=(1 + e ** -value) ** -1)
 
-    # rectlinearunit (recified linear unit) activation function.
     @staticmethod
-    def rectlinearunit(value, constant=0):
+    def rectlinearunit(value: float, constant: float = 0) -> FuncReturn:
+        """Rectlinearunit (recified linear unit) activation function."""
         if value > 0:
-            return value, 1
+            return FuncReturn(result=value, derivative=1)
         else:
-            return 0, 0
+            return FuncReturn(result=0, derivative=0)
 
-    # leakyReLU (leaky rectified linear unit) activation function.
     @staticmethod
-    def leakyReLU(value, constant=0):
+    def leakyReLU(value: float, constant: float = 0) -> FuncReturn:
+        """LeakyReLU (leaky rectified linear unit) activation function."""
         if value > 0:
             return value, 1
         else:
             return constant * value, constant
 
-    # sigmoid activation function.
     @staticmethod
-    def sigmoid(value, constant=0):
-        sigmoid = (1 + math.e ** -value) ** -1
-        return sigmoid, sigmoid * (1 - sigmoid)
+    def sigmoid(value: float, constant: float = 0) -> FuncReturn:
+        """Sigmoid activation function."""
+        sigmoid: float = (1 + e ** -value) ** -1
+        return FuncReturn(result=sigmoid, derivative=sigmoid * (1 - sigmoid))
 
-    # tanh activation function (using math module for faster processing).
     @staticmethod
-    def tanh(value, constant=0):
-        tanh = math.tanh(value)
-        return tanh, 1 - tanh ** 2
+    def tanh(value: float, constant: float = 0) -> FuncReturn:
+        """Tanh activation function (using math module for faster processing)."""
+        tanhv: float = tanh(value)
+        return FuncReturn(result=tanhv, derivative=1 - tanhv ** 2)
 
-    # none returns the value, it is used in inputs where an activation function is not required.
     @staticmethod
-    def none(value, constant=0):
-        return value, 1
+    def none(value: float, constant: float = 0) -> FuncReturn:
+        """None returns the value, it is used in inputs where an activation function is not required."""
+        return FuncReturn(result=value, derivative=1)
 
 
-# LossFunctions is used as a container for the loss functions that can be used by output neurons.
 class LossFunctions:
+    """LossFunctions is used as a container for the loss functions that can be used by output neurons."""
 
-    # meansquarederror (Mean Squared Error or L2 Loss) loss function.
     @staticmethod
-    def meansquarederror(label, predicted, constant=0):
-        return (predicted - label) ** 2, -2 * (predicted - label)
+    def meansquarederror(label: float, predicted: float, constant: float = 0) -> FuncReturn:
+        """Meansquarederror (Mean Squared Error or L2 Loss) loss function."""
+        return FuncReturn(result=(predicted - label) ** 2, derivative=-2 * (predicted - label))
 
-    # l1loss (absolute loss) loss function.
     @staticmethod
-    def l1loss(label, predicted, constant=0):
-        return abs(label - predicted), abs(label - predicted) / (label - predicted)
+    def l1loss(label: float, predicted: float, constant: float = 0) -> FuncReturn:
+        """l1loss (absolute loss) loss function."""
+        return FuncReturn(result=abs(label - predicted), derivative=abs(label - predicted) / (label - predicted))
 
-    # logloss (Log Loss) loss function, used for binary classifiers.
+
     @staticmethod
-    def logloss(label, predicted, constant=0):
+    def logloss(label: float, predicted: float, constant: float = 0) -> FuncReturn:
+        """Logloss (Log Loss) loss function, used for binary classifiers."""
         if label == 1:
-            return - math.log1p(predicted), -1 / math.log1p(predicted)
+            return FuncReturn(result=- log1p(predicted), derivative=-1 / log1p(predicted))
         elif label == 0:
-            return - math.log1p(1 - predicted), -1 / (1 - predicted)
+            return FuncReturn(result=- log1p(1 - predicted), derivative=-1 / (1 - predicted))
 
-    # hingeloss (Hinge Loss) loss function.
     @staticmethod
-    def hingeloss(label, predicted, constant=0):
-        return max(0, 1 - label * predicted), max(0, -label)
+    def hingeloss(label: float, predicted: float, constant: float = 0) -> FuncReturn:
+        """hingeloss (Hinge Loss) loss function."""
+        return FuncReturn(result=max(0, 1 - label * predicted), derivative=max(0, -label))
 
-    # huberloss (Huber Loss) loss function (excludes outliers).
     @staticmethod
-    def huberloss(label, predicted, constant):
+    def huberloss(label: float, predicted: float, constant: float = 0) -> FuncReturn:
+        """huberloss (Huber Loss) loss function (excludes outliers)."""
         if abs(label - predicted) <= constant:
-            return 0.5 * (label - predicted) ** 2, predicted - label
+            return FuncReturn(result=0.5 * (label - predicted) ** 2, derivative=predicted - label)
         else:
-            return constant * abs(label - predicted) - (constant ** 2) / 2, -constant
+            return FuncReturn(result=constant * abs(label - predicted) - (constant ** 2) / 2, derivative=-constant)
 
-    # logcoshloss (Log-Cosh Loss) loss function.
     @staticmethod
-    def logcoshloss(label, predicted, constant=0):
-        return math.log1p(math.cosh(predicted - label)), math.tanh(predicted - label)
-
-
-# The neuron class contains attributes of a neuron, and the methods required for forward and back propagation.
-class Neuron:
-    # NeuronID used to generate unique neuron identities for referencing.
-    neuronID = 0
-
-    def __init__(self, position, activationtype, activationconstant=0):
-
-        # Setting up the unique identity of the neuron.
-        self.__identity = Neuron.neuronID
-
-        # Incrementing the neuronID so that the next neuron created as an ID one higher.
-        Neuron.neuronID += 1
-
-        # Storing the neuron position in the grid (for referencing the editor's design).
-        self.__position = position
-
-        # Setting up neuron activation attributes
-
-        # Storing the type of function to use.
-        self._activationType = activationtype
-
-        # Storing the constant to use.
-        self._activationConstant = activationconstant
-
-        # Storing a reference to the activation function being used.
-        self._activationFunction = self._setactivation(activationtype)
-
-        # Storing neuron connections, differentiating between 'to' and 'from' to aid with forward/back propagation.
-        self._toSynapses = list()
-        self._fromSynapses = list()
-
-        # Setting up neuron values:
-        # inputValue holds the value input to the neuron
-        self._inputValue = float()
-
-        # activationValue holds the value output by the neuron.
-        self._activationValue = float()
-
-        # activationderivative holds the derivative of the neuron's output for use in backpropagation.
-        self._activationDerivative = float()
-
-        # Holds the derivative being sent back by the backpropagation algorithm.
-        self._backpropDerivative = float()
-
-    # Setactivation uses the string name of the activation function to get the actual static function reference so that it can be called.
-    def _setactivation(self, activation):
-
-        # Temporarily storing the function references in a dictionary for easy access.
-        activations = {"TANH": ActivationFunctions.tanh,
-                       "SIGMOID": ActivationFunctions.sigmoid,
-                       "LEAKY ReLU": ActivationFunctions.leakyReLU,
-                       "ReLU": ActivationFunctions.rectlinearunit,
-                       "SOFTPLUS": ActivationFunctions.softplus,
-                       "eLU": ActivationFunctions.expolinearunit,
-                       "LINEAR": ActivationFunctions.linear,
-                       "BINARY STEP": ActivationFunctions.binstep,
-                       "NONE": ActivationFunctions.none
-                       }
-
-        # returning the function reference
-        return activations[activation]
-
-    # resetvalues sets the values dependent on forward and back propagation to zero, ready for the next training cycle.
-    def resetvalues(self):
-        self._inputValue = 0
-        self._activationValue = 0
-        self._activationDerivative = 0
-        self._backpropDerivative = 0
-
-    # addtosynapse is used in the setup of the neuron, and stores the object references of the connected synapses that the neuron feeds to.
-    def addtosynapse(self, synapseobject):
-        self._toSynapses.append(synapseobject)
-
-    # addfromsynapse is used in the neuron's setup and stores object references of synapses that feed into the neuron.
-    def addfromsynapse(self, synapseobject):
-        self._fromSynapses.append(synapseobject)
-
-    # giveinput adds an input to the neuron (used by synapses feeding forwards a value).
-    def giveinput(self, value):
-        self._inputValue += value
-
-    # givederivative adds a given derivative to the neuron, and is used by backpropagating synapses.
-    def givederivative(self, derivative):
-        self._backpropDerivative += derivative
-
-    # passforwards creates the activation value and derivative. Storing the latter and sending the former to all synapses the neuron feeds into.
-    def passforwards(self):
-        self._activationValue, self._activationDerivative = self._activationFunction(self._inputValue, self._activationConstant)
-
-        # Iterating through each connected synapse in order to pass the value onwards.
-        for synapse in self._toSynapses:
-            synapse.passforwards(self._activationValue)
-
-    # passbackwards backpropagates the derivative of the neuron, multiplied by the derivative passed to it.
-    def passbackwards(self):
-
-        # multiplying the activationderivative by the derivative passed to the neuron.
-        self._backpropDerivative *= self._activationDerivative
-
-        # Iterating through each synapse that feeds into the neuron in order to pass the derivative to each.
-        for synapse in self._fromSynapses:
-            synapse.passbackwards(self._backpropDerivative)
-
-    # getidentiy returns the unique id of the neuron.
-    def getidentity(self):
-        return self.__identity
-
-    # getposition returns the position the neuron had within the grid (used for referencing the design).
-    def getposition(self):
-        return tuple(self.__position)
-
-    # getactivationtype returns the string name of the activation function used.
-    def getactivationtype(self):
-        return self._activationType
-
-    # gettosynapses returns a list of the synapses that the neuron feeds values into.
-    def gettosynapses(self):
-        return self._toSynapses
-
-    # getfromsynapse returns a list of all the synapses that the neuron is fed from.
-    def getfromsynapses(self):
-        return self._fromSynapses
-
-    # getinputvalue returns the value input into the neuron.
-    def getinputvalue(self):
-        return self._inputValue
-
-    # getactivationvalue returns the value output by the neuron.
-    def getactivationvalue(self):
-        return self._activationValue
-
-    # getactivationderivative returns the derivative of the neuron, that is used for backpropagation.
-    def getactivationderivative(self):
-        return self._activationDerivative
-
-    # getbackpropderivative returns the derivative of the neuron with regards to loss.
-    def getbackpropderivative(self):
-        return self._backpropDerivative
-
-    # gettype returns the type of object (in this case 'Neuron').
-    def gettype(self):
-        return 'Neuron'
-
-
-# Input is used to hold the attributes and methods for an input neuron.
-class Input(Neuron):
-    def __init__(self, name, position, activationtype, activationconstant=0):
-        # Initialising the Neuron class to inherit it's attributes and methods.
-        # Note: some attributes (such as fromSynapse) are not used due to the nature of Input Neurons.
-        Neuron.__init__(self, position, activationtype, activationconstant)
-
-        # Setup of input name (name associated with the feature that is input to the network):
-        self._name = name
-
-    # passbackwards is overridden from the Neuron class (as there are no synapses to pass back to).
-    def passbackwards(self):
-        self._backpropDerivative *= self._activationDerivative
-
-    # getname returns the name attribute of the input, this is used for adding the features of the same name to it.
-    def getname(self):
-        return self._name
-
-    # gettype is overridden from the Neuron class and returns the type of object, in this case 'Input'.
-    def gettype(self):
-        return "Input"
-
-
-# Output contains all attributes and methods required by an output neuron.
-class Output(Neuron):
-    def __init__(self, name, position, activationtype, activationconstant=0):
-
-        # Initialising the Neuron class to inherit it's attributes and methods.
-        # Note: some attributes (such as toSynapse) are not used due to the nature of output neurons.
-        Neuron.__init__(self, position, activationtype, activationconstant)
-
-        # Setup of output name (name associated with the label that is predicted by the network).
-        self._name = name
-
-        # Holding of the label for a given training iteration
-        self._labelValue = None
-
-    # setlabel is used in training to set the label value associated with the neuron.
-    def setlabel(self, label):
-        self._labelValue = label
-
-    # setactivation is overridden from the Neuron class, and is used to create the function reference required.
-    def _setactivation(self, activation):
-        losses = {"LOG-COSH": LossFunctions.logcoshloss,
-                  "HUBER LOSS": LossFunctions.huberloss,
-                  "HINGE LOSS": LossFunctions.hingeloss,
-                  "LOG LOSS": LossFunctions.logloss,
-                  "L1-LOSS": LossFunctions.l1loss,
-                  "MSE": LossFunctions.meansquarederror
-                  }
-
-        return losses[activation]
-
-    # passforwards is overridden from the Neuron class, it checks for a label value, if present it calculates the loss and loss derivative.
-    def passforwards(self):
-
-        # Checking a label value is present to calculate loss from.
-        if not self._labelValue is None:
-            # Calculating loss and loss derivative.
-            self._activationValue, self._activationDerivative = self._activationFunction(self._inputValue, self._labelValue, self._activationConstant)
-
-            # Setting up the derivative to be backpropagated.
-            self._backpropDerivative = self._activationDerivative
-
-    # passbackwards is overridden from the Neuron class and sends the derivative of the neuron to each synapse feeding into it.
-    def passbackwards(self):
-        for synapse in self._fromSynapses:
-            synapse.passbackwards(self._backpropDerivative)
-
-    # getname returns the name of the output neuron (name of the label associated with that neuron).
-    def getname(self):
-        return self._name
-
-    # getloss returns the loss of the output.
-    def getloss(self):
-        return self._activationValue
-
-    # gettype is overridden from the Neuron class, it returns the type of object, in this case 'Output'.
-    def gettype(self):
-        return 'Output'
-
+    def logcoshloss(label: float, predicted: float, constant: float = 0) -> FuncReturn:
+        """logcoshloss (Log-Cosh Loss) loss function."""
+        return FuncReturn(result=log1p(cosh(predicted - label)), derivative=tanh(predicted - label))
 
 # The synapse class contains all attributes required for synapse connections (weight, bias, initialisations), and provides back and forward propagation
 # functionality, it also adjusts its own weight and bias in accordance with the backpropagated derivative passed to it.
@@ -481,6 +259,231 @@ class Synapse:
     def gettype(self):
         return 'Synapse'
 
+class Neuron:
+    """The neuron class contains attributes of a neuron, and the methods required for forward and back propagation."""
+    # NeuronID used to generate unique neuron identities for referencing.
+    neuronID: int = 0
+
+    def __init__(self, position: (int,int), activationtype: str, activationconstant: float = 0) -> None:
+
+        # Setting up the unique identity of the neuron.
+        self.__identity: int = Neuron.neuronID
+
+        # Incrementing the neuronID so that the next neuron created as an ID one higher.
+        Neuron.neuronID += 1
+
+        # Storing the neuron position in the grid (for referencing the editor's design).
+        self.__position: (int, int) = position
+
+        # Setting up neuron activation attributes
+
+        # Storing the type of function to use.
+        self._activationType: str = activationtype
+
+        # Storing the constant to use.
+        self._activationConstant: float = activationconstant
+
+        # Storing a reference to the activation function being used.
+        # TODO using activationfunction type as type
+        self._activationFunction = self._setactivation(activationtype)
+
+        # Storing neuron connections, differentiating between 'to' and 'from' to aid with forward/back propagation.
+        self._toSynapses: list[Synapse] = list()
+        self._fromSynapses: list[Synapse] = list()
+
+        # Setting up neuron values:
+        # inputValue holds the value input to the neuron
+        self._inputValue: float = float()
+
+        # activationValue holds the value output by the neuron.
+        self._activationValue: float = float()
+
+        # activationderivative holds the derivative of the neuron's output for use in backpropagation.
+        self._activationDerivative: float = float()
+
+        # Holds the derivative being sent back by the backpropagation algorithm.
+        self._backpropDerivative: float = float()
+
+    #TODO using activationfunction type as return type
+    def _setactivation(self, activation: str):
+        """Setactivation uses the string name of the activation function to get the actual static function reference so that it can be called."""
+        # Temporarily storing the function references in a dictionary for easy access.
+        activations = {"TANH": ActivationFunctions.tanh,
+                       "SIGMOID": ActivationFunctions.sigmoid,
+                       "LEAKY ReLU": ActivationFunctions.leakyReLU,
+                       "ReLU": ActivationFunctions.rectlinearunit,
+                       "SOFTPLUS": ActivationFunctions.softplus,
+                       "eLU": ActivationFunctions.expolinearunit,
+                       "LINEAR": ActivationFunctions.linear,
+                       "BINARY STEP": ActivationFunctions.binstep,
+                       "NONE": ActivationFunctions.none
+                       }
+
+        # returning the function reference
+        return activations[activation]
+
+    def resetvalues(self) -> None:
+        """resetvalues sets the values dependent on forward and back propagation to zero, ready for the next training cycle."""
+        self._inputValue = 0
+        self._activationValue = 0
+        self._activationDerivative = 0
+        self._backpropDerivative = 0
+
+    def addtosynapse(self, synapseobject: Synapse) -> None:
+        """addtosynapse is used in the setup of the neuron, and stores the object references of the connected synapses that the neuron feeds to."""
+        self._toSynapses.append(synapseobject)
+
+    # addfromsynapse is used in the neuron's setup and stores object references of synapses that feed into the neuron.
+    def addfromsynapse(self, synapseobject: Synapse) -> None:
+        self._fromSynapses.append(synapseobject)
+
+    def giveinput(self, value: int) -> None:
+        """giveinput adds an input to the neuron (used by synapses feeding forwards a value)."""
+        self._inputValue += value
+
+    def givederivative(self, derivative: float) -> None:
+        """givederivative adds a given derivative to the neuron, and is used by backpropagating synapses."""
+        self._backpropDerivative += derivative
+
+    def passforwards(self) -> None:
+        """passforwards creates the activation value and derivative. Storing the latter and sending the former to all synapses the neuron feeds
+        into."""
+        self._activationValue, self._activationDerivative = self._activationFunction(self._inputValue, self._activationConstant)
+
+        # Iterating through each connected synapse in order to pass the value onwards.
+        for synapse in self._toSynapses:
+            synapse.passforwards(self._activationValue)
+
+    def passbackwards(self) -> None:
+        """passbackwards backpropagates the derivative of the neuron, multiplied by the derivative passed to it."""
+
+        # multiplying the activationderivative by the derivative passed to the neuron.
+        self._backpropDerivative *= self._activationDerivative
+
+        # Iterating through each synapse that feeds into the neuron in order to pass the derivative to each.
+        for synapse in self._fromSynapses:
+            synapse.passbackwards(self._backpropDerivative)
+
+    def getidentity(self) -> int:
+        """getidentiy returns the unique id of the neuron."""
+        return self.__identity
+
+    def getposition(self) -> (int, int):
+        """getposition returns the position the neuron had within the grid (used for referencing the design)."""
+        return self.__position
+
+    def getactivationtype(self) -> str:
+        """getactivationtype returns the string name of the activation function used."""
+        return self._activationType
+
+    def gettosynapses(self) -> list[Synapse]:
+        """gettosynapses returns a list of the synapses that the neuron feeds values into."""
+        return self._toSynapses
+
+    def getfromsynapses(self) -> list[Synapse]:
+        """getfromsynapse returns a list of all the synapses that the neuron is fed from."""
+        return self._fromSynapses
+
+    def getinputvalue(self) -> float:
+        """getinputvalue returns the value input into the neuron."""
+        return self._inputValue
+
+    def getactivationvalue(self) -> float:
+        """getactivationvalue returns the value output by the neuron."""
+        return self._activationValue
+
+    def getactivationderivative(self) -> float:
+        """getactivationderivative returns the derivative of the neuron, that is used for backpropagation."""
+        return self._activationDerivative
+
+    def getbackpropderivative(self) -> float:
+        """getbackpropderivative returns the derivative of the neuron with regards to loss."""
+        return self._backpropDerivative
+
+    def gettype(self) -> str:
+        """gettype returns the type of object (in this case 'Neuron')."""
+        return 'Neuron'
+
+
+class Input(Neuron):
+    """Input is used to hold the attributes and methods for an input neuron."""
+    def __init__(self, name: str, position: (int,int), activationtype: str, activationconstant: float = 0) -> None:
+        # Initialising the Neuron class to inherit it's attributes and methods.
+        # Note: some attributes (such as fromSynapse) are not used due to the nature of Input Neurons.
+        Neuron.__init__(self, position, activationtype, activationconstant)
+
+        # Setup of input name (name associated with the feature that is input to the network):
+        self._name: str = name
+
+    def passbackwards(self) -> None:
+        """passbackwards is overridden from the Neuron class (as there are no synapses to pass back to)."""
+        self._backpropDerivative *= self._activationDerivative
+
+    def getname(self) -> str:
+        """getname returns the name attribute of the input, this is used for adding the features of the same name to it."""
+        return self._name
+
+    def gettype(self) -> str:
+        """gettype is overridden from the Neuron class and returns the type of object, in this case 'Input'."""
+        return "Input"
+
+
+class Output(Neuron):
+    """Output contains all attributes and methods required by an output neuron."""
+    def __init__(self, name: str, position: (int,int), activationtype: str, activationconstant: float = 0) -> None:
+
+        # Initialising the Neuron class to inherit it's attributes and methods.
+        # Note: some attributes (such as toSynapse) are not used due to the nature of output neurons.
+        Neuron.__init__(self, position, activationtype, activationconstant)
+
+        # Setup of output name (name associated with the label that is predicted by the network).
+        self._name: str = name
+
+        # Holding of the label for a given training iteration
+        self._labelValue: float = None
+
+    def setlabel(self, label: str) -> None:
+        """setlabel is used in training to set the label value associated with the neuron."""
+        self._labelValue = label
+
+    def _setactivation(self, activation: str):
+        """setactivation is overridden from the Neuron class, and is used to create the function reference required."""
+        losses = {"LOG-COSH": LossFunctions.logcoshloss,
+                  "HUBER LOSS": LossFunctions.huberloss,
+                  "HINGE LOSS": LossFunctions.hingeloss,
+                  "LOG LOSS": LossFunctions.logloss,
+                  "L1-LOSS": LossFunctions.l1loss,
+                  "MSE": LossFunctions.meansquarederror
+                  }
+
+        return losses[activation]
+
+    def passforwards(self) -> None:
+        """passforwards is overridden from the Neuron class, it checks for a label value, if present it calculates the loss and loss derivative."""
+        # Checking a label value is present to calculate loss from.
+        if not self._labelValue is None:
+            # Calculating loss and loss derivative.
+            self._activationValue, self._activationDerivative = self._activationFunction(self._inputValue, self._labelValue, self._activationConstant)
+
+            # Setting up the derivative to be backpropagated.
+            self._backpropDerivative = self._activationDerivative
+
+    def passbackwards(self) -> None:
+        """passbackwards is overridden from the Neuron class and sends the derivative of the neuron to each synapse feeding into it."""
+        for synapse in self._fromSynapses:
+            synapse.passbackwards(self._backpropDerivative)
+
+    def getname(self) -> str:
+        """getname returns the name of the output neuron (name of the label associated with that neuron)."""
+        return self._name
+
+    def getloss(self) -> float:
+        """getloss returns the loss of the output."""
+        return self._activationValue
+
+    def gettype(self) -> str:
+        """gettype is overridden from the Neuron class, it returns the type of object, in this case 'Output'."""
+        return 'Output'
 
 # The network class stores the structure of the network, and manages the forward and backpropagation algorithms.
 class Network:
